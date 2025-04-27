@@ -1,123 +1,106 @@
-import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom' // <-- Import Navigate here
+import {Component} from 'react'
 import Cookies from 'js-cookie'
+import { RingLoader } from 'react-spinners';
+
+import ProductCard from '../ProductCard'
 
 import './index.css'
 
-const LoginForm = () => {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showSubmitError, setShowSubmitError] = useState(false)
-  const [errorMsg, setErrorMsg] = useState('')
-
-  const navigate = useNavigate()
-
-  const onChangeUsername = event => {
-    setUsername(event.target.value)
-  }
-
-  const onChangePassword = event => {
-    setPassword(event.target.value)
-  }
-
-  const onSubmitSuccess = jwtToken => {
-    Cookies.set('jwt_token', jwtToken, {
-      expires: 30,
-    })
-    navigate('/')
-  }
-
-  const onSubmitFailure = errorMsg => {
-    setShowSubmitError(true)
-    setErrorMsg(errorMsg)
-  }
-
-  const submitForm = async event => {
-    event.preventDefault()
-    const userDetails = { username, password }
-    const url = 'https://apis.ccbp.in/login'
-    const options = {
-      method: 'POST',
-      body: JSON.stringify(userDetails),
-    }
-    const response = await fetch(url, options)
-    const data = await response.json()
-    if (response.ok === true) {
-      onSubmitSuccess(data.jwt_token)
-    } else {
-      onSubmitFailure(data.error_msg)
-    }
-  }
-
-  const renderPasswordField = () => {
-    return (
-      <>
-        <label className="input-label" htmlFor="password">
-          PASSWORD
-        </label>
-        <input
-          type="password"
-          id="password"
-          className="password-input-field"
-          value={password}
-          onChange={onChangePassword}
-          placeholder="Password"
-        />
-      </>
-    )
-  }
-
-  const renderUsernameField = () => {
-    return (
-      <>
-        <label className="input-label" htmlFor="username">
-          USERNAME
-        </label>
-        <input
-          type="text"
-          id="username"
-          className="username-input-field"
-          value={username}
-          onChange={onChangeUsername}
-          placeholder="Username"
-        />
-      </>
-    )
-  }
-
-  const jwtToken = Cookies.get('jwt_token')
-
-  if (jwtToken !== undefined) {
-    return <Navigate to="/" />
-  }
-
-  return (
-    <div className="login-form-container">
-      <img
-        src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-logo-img.png"
-        className="login-website-logo-mobile-img"
-        alt="website logo"
-      />
-      <img
-        src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-login-img.png"
-        className="login-img"
-        alt="website login"
-      />
-      <form className="form-container" onSubmit={submitForm}>
-        <img
-          src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-logo-img.png"
-          className="login-website-logo-desktop-img"
-          alt="website logo"
-        />
-        <div className="input-container">{renderUsernameField()}</div>
-        <div className="input-container">{renderPasswordField()}</div>
-        <button type="submit" className="login-button">
-          Login
-        </button>
-        {showSubmitError && <p className="error-message">*{errorMsg}</p>}
-      </form>
-    </div>
-  )
+const apiStatusConstants = {
+  initial: 'INITIAL',
+  success: 'SUCCESS',
+  failure: 'FAILURE',
+  inProgress: 'IN_PROGRESS',
 }
 
-export default LoginForm
+class PrimeDealsSection extends Component {
+  state = {
+    primeDeals: [],
+    apiStatus: apiStatusConstants.initial,
+  }
+
+  componentDidMount() {
+    this.getPrimeDeals()
+  }
+
+  getPrimeDeals = async () => {
+    this.setState({
+      apiStatus: apiStatusConstants.inProgress,
+    })
+
+    const jwtToken = Cookies.get('jwt_token')
+
+    const apiUrl = 'https://apis.ccbp.in/prime-deals'
+    const options = {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
+      method: 'GET',
+    }
+    const response = await fetch(apiUrl, options)
+    if (response.ok === true) {
+      const fetchedData = await response.json()
+      const updatedData = fetchedData.prime_deals.map(product => ({
+        title: product.title,
+        brand: product.brand,
+        price: product.price,
+        id: product.id,
+        imageUrl: product.image_url,
+        rating: product.rating,
+      }))
+      this.setState({
+        primeDeals: updatedData,
+        apiStatus: apiStatusConstants.success,
+      })
+    }
+    if (response.status === 401) {
+      this.setState({
+        apiStatus: apiStatusConstants.failure,
+      })
+    }
+  }
+
+  renderPrimeDealsListView = () => {
+    const {primeDeals} = this.state
+    return (
+      <div>
+        <h1 className="primedeals-list-heading">Exclusive Prime Deals</h1>
+        <ul className="products-list">
+          {primeDeals.map(product => (
+            <ProductCard productData={product} key={product.id} />
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
+  renderPrimeDealsFailureView = () => (
+    <img
+      src="https://assets.ccbp.in/frontend/react-js/exclusive-deals-banner-img.png"
+      alt="register prime"
+      className="register-prime-img"
+    />
+  )
+
+  renderLoadingView = () => (
+    <div className="primedeals-loader-container">
+      <RingLoader color="#0b69ff" loading={true} size={50} />
+    </div>
+  )
+
+  render() {
+    const {apiStatus} = this.state
+    switch (apiStatus) {
+      case apiStatusConstants.success:
+        return this.renderPrimeDealsListView()
+      case apiStatusConstants.failure:
+        return this.renderPrimeDealsFailureView()
+      case apiStatusConstants.inProgress:
+        return this.renderLoadingView()
+      default:
+        return null
+    }
+  }
+}
+
+export default PrimeDealsSection
