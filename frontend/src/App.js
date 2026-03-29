@@ -1,5 +1,6 @@
 import {Component} from 'react'
 import {Route, Routes, Navigate} from 'react-router-dom'
+import { toast } from 'react-toastify';
 
 import LoginForm from './components/LoginForm'
 import Home from './components/Home'
@@ -9,6 +10,7 @@ import Cart from './components/Cart'
 import NotFound from './components/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import CartContext from './context/CartContext'
+import ProductItemDetailsWrapper from './components/ProductItemDetailsWrapper'
 
 import './App.css'
 
@@ -20,7 +22,12 @@ class App extends Component {
   decrementCartItemQuantity = id => {
     const {cartList} = this.state
     const productObject = cartList.find(eachCartItem => eachCartItem.id === id)
-    if (productObject.quantity > 1) {
+    if(productObject.quantity === 1){
+      this.setState(prevState => ({
+        cartList: prevState.cartList.filter(eachCartItem => eachCartItem.id !== id)
+      }))
+    }
+    else if (productObject.quantity > 1) {
       this.setState(prevState => ({
         cartList: prevState.cartList.map(eachCartItem => {
           if (id === eachCartItem.id) {
@@ -54,6 +61,17 @@ class App extends Component {
     const updatedCartList = cartList.filter(
       eachCartItem => eachCartItem.id !== id,
     )
+    const deletedItem = cartList.find(eachCartItem => eachCartItem.id === id)
+    const {title} = deletedItem;
+    toast(`${title} removed from cart`, {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+              }); 
     this.setState({cartList: updatedCartList})
   }
 
@@ -79,7 +97,7 @@ class App extends Component {
           <Route path="/login" element={<LoginForm />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-          <Route path="/products/:id" element={<ProtectedRoute><ProductItemDetails /></ProtectedRoute>} />
+          <Route path="/products/:id" element={<ProtectedRoute><ProductItemDetailsWrapper /></ProtectedRoute>} />
           <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
           <Route path="/not-found" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/not-found" />} />

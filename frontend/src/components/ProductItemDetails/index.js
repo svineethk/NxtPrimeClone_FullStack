@@ -1,6 +1,7 @@
 import {Component} from 'react'
 import {Link} from 'react-router-dom'
 import Cookies from 'js-cookie'
+import { toast } from "react-toastify";
 import { RingLoader } from 'react-spinners';
 
 import {BsPlusSquare, BsDashSquare} from 'react-icons/bs'
@@ -44,9 +45,7 @@ class ProductItemDetails extends Component {
   })
 
   getProductData = async () => {
-    const {match} = this.props
-    const {params} = match
-    const {id} = params
+    const {id} = this.props.params
 
     this.setState({
       apiStatus: apiStatusConstants.inProgress,
@@ -129,6 +128,15 @@ class ProductItemDetails extends Component {
         const {addCartItem} = value
         const onClickAddToCart = () => {
           addCartItem({...productData, quantity})
+          toast(`${title} added to cart successfully!`, {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          }); 
         }
 
         return (

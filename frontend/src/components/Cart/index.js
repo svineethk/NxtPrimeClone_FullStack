@@ -1,5 +1,6 @@
 import Header from '../Header'
 import CartListView from '../CartListView'
+import { toast } from 'react-toastify'
 
 import CartContext from '../../context/CartContext'
 import EmptyCartView from '../EmptyCartView'
@@ -14,6 +15,15 @@ const Cart = () => (
       const showEmptyView = cartList.length === 0
       const onClickRemoveAllBtn = () => {
         removeAllCartItems()
+        toast(`All items removed from cart`, {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                  }); 
       }
 
       return (
